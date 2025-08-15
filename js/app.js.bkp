@@ -1,0 +1,433 @@
+// ==============================================================================
+// ESCOPO GLOBAL - Funções que o Google precisa "enxergar"
+// ==============================================================================
+
+// Guarda o "crachá" de identidade do usuário após o login.
+let idToken = null; 
+
+/**
+ * Ponto de Entrada da Aplicação.
+ * Esta função é chamada automaticamente pelo script do Google após o usuário fazer o login com sucesso.
+ */
+function handleCredentialResponse(response) {
+    console.log("Login com Google bem-sucedido. Token recebido.");
+    idToken = response.credential;
+
+    // Esconde a tela de login
+    document.getElementById('auth-container').style.display = 'none';
+    // Mostra o conteúdo principal da aplicação
+    document.getElementById('main-app').classList.remove('hidden');
+
+    try {
+        // Decodifica o token para exibir o nome do usuário na tela
+        const userInfoPayload = JSON.parse(atob(idToken.split('.')[1]));
+        const userInfoElement = document.getElementById('user-info');
+        if (userInfoElement) {
+            userInfoElement.textContent = `Logado como: ${userInfoPayload.name}`;
+        }
+    } catch (e) {
+        console.error("Erro ao decodificar o token:", e);
+    }
+    
+    // Chama a função que inicializa toda a lógica da aplicação
+    initializeAppLogic();
+}
+
+/**
+ * Função principal que configura e anexa todos os eventos da aplicação.
+ * É chamada uma única vez, após o login bem-sucedido.
+ */
+function initializeAppLogic() {
+    console.log("Inicializando a lógica da aplicação...");
+
+    const API_BASE_URL = 'http://127.0.0.1:8001';
+    
+    const elements = {
+        calendarSelect: document.getElementById('calendar-select'),
+        findEventsBtn: document.getElementById('find-events-btn'),
+        clearFiltersBtn: document.getElementById('clear-filters-btn'),
+        filterStartDate: document.getElementById('filter-start-date'),
+        filterEndDate: document.getElementById('filter-end-date'),
+        eventsListContainer: document.getElementById('events-list-container'),
+        eventsPlaceholder: document.getElementById('events-placeholder'),
+        loadMoreContainer: document.getElementById('load-more-container'),
+        loadMoreBtn: document.getElementById('load-more-btn'),
+        loader: document.getElementById('loader'),
+        loaderText: document.getElementById('loader-text'),
+        toastContainer: document.getElementById('toast-container'),
+        createSection: document.getElementById('create-section'),
+        toggleFormBtn: document.getElementById('toggle-form-btn'),
+        createEventForm: document.getElementById('create-event-form'),
+        signOutBtn: document.getElementById('sign-out-btn'),
+        selectedCourtDisplay: document.getElementById('selected-court-display'),
+        selectedCourtName: document.getElementById('selected-court-name'),
+        confirmModal: document.getElementById('confirm-modal'),
+        confirmModalText: document.getElementById('confirm-modal-text'),
+        confirmModalConfirmBtn: document.getElementById('confirm-modal-confirm-btn'),
+        confirmModalCancelBtn: document.getElementById('confirm-modal-cancel-btn'),
+        rescheduleModal: document.getElementById('reschedule-modal'),
+        rescheduleForm: document.getElementById('reschedule-form'),
+        rescheduleEventTitle: document.getElementById('reschedule-event-title'),
+        rescheduleStartTimeInput: document.getElementById('reschedule-start-time'),
+        rescheduleEndTimeInput: document.getElementById('reschedule-end-time'),
+        rescheduleModalCancelBtn: document.getElementById('reschedule-modal-cancel-btn'),
+    };
+    
+    const state = {
+        currentEvents: [],
+        selectedCalendarId: null,
+        eventToModify: null,
+        nextPageToken: null,
+        currentUserEmail: null,
+        isAdmin: false
+    };
+
+    const api = {
+        async request(endpoint, options = {}) {
+            if (!idToken) {
+                showToast('Erro de autenticação. Por favor, faça o login novamente.', 'error');
+                throw new Error('Usuário não autenticado.');
+            }
+            const headers = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${idToken}`,
+                ...options.headers
+            };
+            try {
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, { headers, ...options });
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+                    throw new Error(errorData.detail || 'Ocorreu um erro na comunicação com o servidor.');
+                }
+                return response.json();
+            } catch (error) {
+                hideLoader();
+                throw error;
+            }
+        },
+        listCalendars: () => api.request('/actions/list_calendars'),
+        findEvents: (calendarId, { pageToken = null, timeMin = null, timeMax = null } = {}) => {
+            let endpoint = `/actions/find_events?calendar_id=${calendarId}`;
+            if (pageToken) endpoint += `&page_token=${pageToken}`;
+            if (timeMin) endpoint += `&time_min_str=${timeMin}`;
+            if (timeMax) endpoint += `&time_max_str=${timeMax}`;
+            return api.request(endpoint);
+        },
+        createEvent: (calendarId, eventData) => api.request('/actions/create_event', {
+            method: 'POST', body: JSON.stringify({ calendar_id: calendarId, event_data: eventData }),
+        }),
+        deleteEvent: (eventId, calendarId) => api.request(`/actions/delete_event/${eventId}?calendar_id=${calendarId}`, {
+            method: 'DELETE',
+        }),
+        updateEvent: (eventId, calendarId, updateData) => api.request(`/actions/update_event/${eventId}?calendar_id=${calendarId}`, {
+            method: 'PATCH', body: JSON.stringify(updateData),
+        }),
+    };
+
+    const showLoader = (message = 'Processando...') => {
+        elements.loaderText.textContent = message;
+        elements.loader.classList.remove('hidden');
+    };
+    const hideLoader = () => {
+        elements.loader.classList.add('hidden');
+    };
+    const showToast = (message, type = 'success') => {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        elements.toastContainer.appendChild(toast);
+        setTimeout(() => { toast.remove(); }, 6000);
+    };
+
+    const renderCalendars = (calendars) => {
+        elements.calendarSelect.innerHTML = '<option value="" disabled selected>Selecione uma quadra</option>';
+        calendars.forEach(calendar => {
+            const option = document.createElement('option');
+            option.value = calendar.id;
+            option.textContent = calendar.summary;
+            elements.calendarSelect.appendChild(option);
+        });
+    };
+
+    const formatDateTime = (isoString) => {
+        if (!isoString) return 'N/A';
+        const date = new Date(isoString);
+        return date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    };
+
+    const renderEvents = (events, append = false) => {
+        if (!append) elements.eventsListContainer.innerHTML = '';
+        
+        const placeholder = document.getElementById('events-placeholder');
+        if (placeholder) placeholder.remove();
+        
+        if (events.length === 0 && !append) {
+            const hasFilters = elements.filterStartDate.value || elements.filterEndDate.value;
+            elements.eventsListContainer.innerHTML = `<p id="events-placeholder">${hasFilters ? 'Nenhum agendamento encontrado para os filtros aplicados.' : 'Nenhum agendamento futuro para esta quadra.'}</p>`;
+            return;
+        }
+
+        let lastRenderedDay = append ? (elements.eventsListContainer.querySelector('.date-header:last-of-type')?.dataset.day || null) : null;
+        
+        events.forEach(event => {
+            const eventDate = new Date(event.start.dateTime);
+            const eventDay = eventDate.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+            if (eventDay !== lastRenderedDay) {
+                const dateHeader = document.createElement('h3');
+                dateHeader.className = 'date-header';
+                dateHeader.textContent = eventDay;
+                dateHeader.dataset.day = eventDay;
+                elements.eventsListContainer.appendChild(dateHeader);
+                lastRenderedDay = eventDay;
+            }
+
+            const eventItem = document.createElement('div');
+            eventItem.className = 'event-item';
+            const isBlocked = event.summary && event.summary.toLowerCase().includes('bloqueado');
+            
+            const requesterEmail = event.extendedProperties?.private?.requesterEmail;
+            const canManage = !isBlocked && (state.isAdmin || (requesterEmail && requesterEmail === state.currentUserEmail));
+            
+            if (isBlocked) eventItem.classList.add('event-item-blocked');
+            
+            const description = event.description ? `<p class="event-description">${event.description.replace(/\n/g, '<br>')}</p>` : '';
+            const disabledAttribute = !canManage ? 'disabled title="Você não tem permissão para alterar este evento."' : '';
+            
+            eventItem.innerHTML = `
+                <div class="event-details">
+                    <h4>${event.summary || '(Sem Título)'}</h4>
+                    <p><strong>Início:</strong> ${formatDateTime(event.start?.dateTime)}</p>
+                    <p><strong>Fim:</strong> ${formatDateTime(event.end?.dateTime)}</p>
+                    ${description}
+                </div>
+                ${!isBlocked ? `
+                <div class="event-actions">
+                    <button class="btn btn-secondary btn-reschedule" data-event-id="${event.id}" ${disabledAttribute}>Reagendar</button>
+                    <button class="btn btn-danger btn-cancel" data-event-id="${event.id}" ${disabledAttribute}>Cancelar</button>
+                </div>` : ''}
+            `;
+            elements.eventsListContainer.appendChild(eventItem);
+        });
+    };
+    
+    const handleFindEvents = async () => {
+        state.selectedCalendarId = elements.calendarSelect.value;
+        if (!state.selectedCalendarId) {
+            return showToast('Por favor, selecione uma quadra.', 'error');
+        }
+        showLoader('Buscando eventos...');
+        try {
+            const timeMin = elements.filterStartDate.value;
+            const timeMax = elements.filterEndDate.value;
+            const response = await api.findEvents(state.selectedCalendarId, { timeMin, timeMax });
+            
+            state.currentUserEmail = response.user_email;
+            state.isAdmin = response.isAdmin;
+            state.currentEvents = response.events.items || [];
+            state.nextPageToken = response.events.next_page_token || null;
+
+            const selectedOption = elements.calendarSelect.options[elements.calendarSelect.selectedIndex];
+            elements.selectedCourtName.textContent = selectedOption.text;
+            elements.selectedCourtDisplay.classList.remove('hidden');
+
+            renderEvents(state.currentEvents, false);
+
+            if (state.nextPageToken) {
+                elements.loadMoreContainer.classList.remove('hidden');
+            } else {
+                elements.loadMoreContainer.classList.add('hidden');
+            }
+        } catch (error) {
+            elements.selectedCourtDisplay.classList.add('hidden');
+            showToast(`Erro ao buscar eventos: ${error.message}`, 'error');
+            renderEvents([], false);
+        } finally {
+            hideLoader();
+        }
+    };
+
+    const handleLoadMore = async () => {
+        if (!state.nextPageToken) return;
+        elements.loadMoreBtn.disabled = true;
+        elements.loadMoreBtn.textContent = 'Carregando...';
+        try {
+            const timeMin = elements.filterStartDate.value;
+            const timeMax = elements.filterEndDate.value;
+            const response = await api.findEvents(state.selectedCalendarId, { pageToken: state.nextPageToken, timeMin, timeMax });
+            
+            state.currentUserEmail = response.user_email;
+            state.isAdmin = response.isAdmin;
+            const newEvents = response.events.items || [];
+            state.currentEvents.push(...newEvents);
+            state.nextPageToken = response.events.next_page_token || null;
+            renderEvents(newEvents, true);
+
+            if (!state.nextPageToken) {
+                elements.loadMoreContainer.classList.add('hidden');
+            }
+        } catch (error) {
+            showToast(`Erro ao carregar mais eventos: ${error.message}`, 'error');
+        } finally {
+            elements.loadMoreBtn.disabled = false;
+            elements.loadMoreBtn.textContent = 'Carregar Mais';
+        }
+    };
+
+    const handleClearFilters = () => {
+        elements.filterStartDate.value = '';
+        elements.filterEndDate.value = '';
+        if (state.selectedCalendarId) {
+            handleFindEvents();
+        }
+    };
+
+    const handleCreateEvent = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(elements.createEventForm);
+        const startTime = new Date(formData.get('start'));
+        const endTime = new Date(formData.get('end'));
+        
+        if (!formData.get('start') || !formData.get('end') || !formData.get('summary')) {
+             return showToast('Título, Início e Fim são obrigatórios.', 'error');
+        }
+        if (endTime <= startTime) {
+            return showToast('Erro: A data de Fim deve ser posterior à data de Início.', 'error');
+        }
+        if (!state.selectedCalendarId) {
+            return showToast('Selecione uma quadra antes de agendar.', 'error');
+        }
+        
+        const eventData = {
+            summary: formData.get('summary'),
+            description: formData.get('description'),
+            start: { dateTime: startTime.toISOString() },
+            end: { dateTime: endTime.toISOString() },
+        };
+        
+        showLoader('Processando agendamento...');
+        try {
+            const response = await api.createEvent(state.selectedCalendarId, eventData);
+            hideLoader();
+            showToast(response.message, 'success');
+            elements.createEventForm.reset();
+            handleFindEvents();
+        } catch (error) {
+            hideLoader();
+            showToast(`Erro ao agendar evento: ${error.message}`, 'error');
+        }
+    };
+    
+    const handleEventActionClick = (e) => {
+        const target = e.target.closest('.btn');
+        if (!target || target.disabled) return;
+        const eventId = target.dataset.eventId;
+        if (!eventId) return;
+
+        state.eventToModify = { id: eventId, calendarId: state.selectedCalendarId };
+        if (target.classList.contains('btn-cancel')) {
+            elements.confirmModalText.textContent = 'Tem certeza que deseja cancelar este agendamento? Esta ação não pode ser desfeita.';
+            elements.confirmModal.classList.remove('hidden');
+        }
+        if (target.classList.contains('btn-reschedule')) {
+            const event = state.currentEvents.find(ev => ev.id === eventId);
+            if (event) {
+                elements.rescheduleEventTitle.textContent = event.summary;
+                if (event.start?.dateTime) elements.rescheduleStartTimeInput.value = event.start.dateTime.slice(0, 16);
+                if (event.end?.dateTime) elements.rescheduleEndTimeInput.value = event.end.dateTime.slice(0, 16);
+                elements.rescheduleModal.classList.remove('hidden');
+            }
+        }
+    };
+    
+    const handleConfirmDelete = async () => {
+        if (!state.eventToModify) return;
+        showLoader('Excluindo agendamento...');
+        try {
+            const response = await api.deleteEvent(state.eventToModify.id, state.eventToModify.calendarId);
+            hideLoader();
+            showToast(response.message, 'success');
+            handleFindEvents();
+        } catch (error) {
+            hideLoader();
+            showToast(`Erro ao cancelar agendamento: ${error.message}`, 'error');
+        } finally {
+            state.eventToModify = null;
+            elements.confirmModal.classList.add('hidden');
+        }
+    };
+    
+    const handleRescheduleEvent = async (e) => {
+        e.preventDefault();
+        if (!state.eventToModify) return;
+        const startTime = new Date(elements.rescheduleStartTimeInput.value);
+        const endTime = new Date(elements.rescheduleEndTimeInput.value);
+        if (endTime <= startTime) {
+            return showToast('Erro: A nova data de Fim deve ser posterior à de Início.', 'error');
+        }
+        const updateData = {
+            start: { dateTime: startTime.toISOString() },
+            end: { dateTime: endTime.toISOString() },
+        };
+        showLoader('Reagendando evento...');
+        try {
+            const response = await api.updateEvent(state.eventToModify.id, state.eventToModify.calendarId, updateData);
+            hideLoader();
+            showToast(response.message, 'success');
+            handleFindEvents();
+        } catch (error) {
+            hideLoader();
+            showToast(`Erro ao reagendar evento: ${error.message}`, 'error');
+        } finally {
+            state.eventToModify = null;
+            elements.rescheduleModal.classList.add('hidden');
+        }
+    };
+
+    // Adiciona todos os listeners de eventos da aplicação
+    elements.signOutBtn.addEventListener('click', () => {
+        idToken = null;
+        google.accounts.id.disableAutoSelect();
+        window.location.reload();
+    });
+    elements.findEventsBtn.addEventListener('click', handleFindEvents);
+    elements.clearFiltersBtn.addEventListener('click', handleClearFilters);
+    elements.loadMoreBtn.addEventListener('click', handleLoadMore);
+    elements.createEventForm.addEventListener('submit', handleCreateEvent);
+    elements.eventsListContainer.addEventListener('click', handleEventActionClick);
+    elements.calendarSelect.addEventListener('change', () => {
+        elements.eventsListContainer.innerHTML = `<p id="events-placeholder">Clique em "Buscar Eventos" para ver os agendamentos da nova quadra.</p>`;
+        elements.loadMoreContainer.classList.add('hidden');
+        elements.selectedCourtDisplay.classList.add('hidden'); 
+        state.nextPageToken = null;
+    });
+    elements.confirmModalCancelBtn.addEventListener('click', () => {
+        state.eventToModify = null;
+        elements.confirmModal.classList.add('hidden');
+    });
+    elements.confirmModalConfirmBtn.addEventListener('click', handleConfirmDelete);
+    elements.rescheduleModalCancelBtn.addEventListener('click', () => {
+        state.eventToModify = null;
+        elements.rescheduleModal.classList.add('hidden');
+    });
+    elements.rescheduleForm.addEventListener('submit', handleRescheduleEvent);
+    elements.toggleFormBtn.addEventListener('click', () => {
+        elements.createEventForm.classList.toggle('hidden');
+        const isHidden = elements.createEventForm.classList.contains('hidden');
+        elements.toggleFormBtn.textContent = isHidden ? 'Mostrar Formulário' : 'Ocultar Formulário';
+    });
+
+    // Carregamento inicial das quadras, que agora acontece após o login
+    showLoader('Carregando quadras...');
+    api.listCalendars().then(response => {
+        renderCalendars(response.items || []);
+    }).catch(error => {
+        if (error.message !== 'Usuário não autenticado.') {
+            showToast(`Erro fatal ao carregar as quadras: ${error.message}`, 'error');
+        } else {
+            console.log("Aguardando login do usuário...");
+        }
+        elements.calendarSelect.innerHTML = '<option value="" disabled selected>Erro ao carregar</option>';
+    }).finally(() => {
+        hideLoader();
+    });
+}

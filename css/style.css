@@ -1,0 +1,472 @@
+/* --- FONT IMPORT --- */
+/*
+  INSTRUÇÕES PARA FONTES CUSTOMIZADAS:
+  1. Na pasta raiz do seu projeto, crie uma pasta chamada 'assets', e dentro dela, outra chamada 'fonts'.
+     A estrutura deve ser: /assets/fonts/
+  2. Coloque todos os seus arquivos de fonte (ex: CriteriaCF-Regular.otf, CriteriaCF-Bold.otf) dentro da pasta 'fonts'.
+  3. O código abaixo já está configurado para carregar e usar essas fontes.
+*/
+@font-face {
+    font-family: 'CriteriaCF';
+    src: url('../assets/fonts/CriteriaCF-Regular.otf') format('opentype');
+    font-weight: 400; /* Regular */
+    font-style: normal;
+}
+@font-face {
+    font-family: 'CriteriaCF';
+    src: url('../assets/fonts/CriteriaCF-Bold.otf') format('opentype');
+    font-weight: 700; /* Bold */
+    font-style: normal;
+}
+@font-face {
+    font-family: 'CriteriaCF';
+    src: url('../assets/fonts/CriteriaCF-ExtraBold.otf') format('opentype');
+    font-weight: 800; /* ExtraBold (para Títulos) */
+    font-style: normal;
+}
+@font-face {
+    font-family: 'CriteriaCF';
+    src: url('../assets/fonts/CriteriaCF-Thin.otf') format('opentype');
+    font-weight: 100; /* Thin (para Citações/Descrições) */
+    font-style: normal;
+}
+
+
+/* --- THEME & GLOBAL STYLES --- */
+:root {
+    /* Paleta de Cores - Esporte Clube Pinheiros */
+    --primary-color: #0040ff;
+    --secondary-color: #f8f9fa; 
+    --text-color: #333333;
+    --light-text-color: #ffffff;
+    --dark-color: #000000;
+    --white-color: #ffffff;
+    --border-color: #dee2e6;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --shadow-color: rgba(0, 0, 0, 0.05);
+
+    /* Fonte */
+    --main-font: 'CriteriaCF', 'Roboto', sans-serif;
+    
+    /* Outras variáveis */
+    --border-radius: 8px;
+    --card-shadow: 0 4px 8px var(--shadow-color);
+    --transition-speed: 0.3s ease;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--main-font);
+    font-weight: 400; /* Peso 'Regular' para o corpo */
+    background-color: var(--primary-color);
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    display: grid;
+    gap: 1.5rem;
+}
+
+/* --- HEADER --- */
+.app-header {
+    background-color: var(--dark-color);
+    color: var(--light-text-color);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    font-weight: 800; /* Peso 'ExtraBold' para o título principal */
+}
+.logo {
+    height: 50px;
+}
+.app-header h1 {
+    font-family: 'CriteriaCF', 'Roboto', sans-serif; /* Garante a fonte correta */
+    font-weight: 800; /* Usa o peso 'ExtraBold' que definimos */
+    font-size: 1.5rem;
+}
+
+/* --- AUTH CONTAINER (Tela de Login) --- */
+#auth-box {
+    background-color: var(--white-color);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    text-align: center;
+    max-width: 450px;
+    margin: 4rem auto;
+    box-shadow: var(--card-shadow);
+}
+.login-logo {
+    height: 200px; /* Logo maior na tela de login */
+    margin-bottom: 1.5rem;
+}
+#auth-box h3 {
+    font-weight: 700; /* Peso 'Bold' para "Acessar o Sistema" */
+    margin-bottom: 0.5rem;
+}
+#auth-box p {
+    margin-bottom: 1.5rem;
+    color: #6c757d;
+}
+
+/* --- BARRA DE USUÁRIO --- */
+.user-info-bar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
+    padding-bottom: 0;
+    margin-bottom: -1rem;
+}
+#user-info {
+    font-weight: 500;
+    color: var(--light-text-color); /* Texto branco para legibilidade no fundo azul */
+}
+
+/* --- CARDS & SECTIONS --- */
+.card {
+    background-color: var(--white-color);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    box-shadow: var(--card-shadow);
+}
+.card h2 {
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--secondary-color);
+    padding-bottom: 0.5rem;
+    font-weight: 700; /* Peso 'Bold' para subtítulos de seção */
+}
+.create-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* --- FORMS & FILTERS --- */
+.form-group { margin-bottom: 1rem; }
+.form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+.filter-group { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: flex-end; }
+.filter-group .form-group { flex-grow: 1; margin-bottom: 0; }
+.button-group { display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; }
+
+input, select, textarea {
+    font-family: var(--main-font); /* Garante que a fonte seja aplicada a inputs */
+}
+
+input[type="text"], input[type="datetime-local"], input[type="date"], select, textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+}
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 64, 255, 0.2);
+}
+
+/* --- BUTTONS --- */
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-family: var(--main-font);
+    font-weight: 700;
+    font-size: 1rem;
+    text-transform: uppercase;
+    transition: background-color var(--transition-speed), transform var(--transition-speed);
+}
+.btn:hover:not(:disabled) { transform: translateY(-2px); }
+.btn:disabled { background-color: #ccc; cursor: not-allowed; transform: none; }
+.btn.btn-primary { background-color: var(--primary-color); color: var(--light-text-color); }
+.btn.btn-primary:hover:not(:disabled) { background-color: #0033cc; }
+.btn.btn-secondary { background-color: #6c757d; color: var(--light-text-color); }
+.btn.btn-secondary:hover:not(:disabled) { background-color: #5a6268; }
+.btn.btn-danger { background-color: var(--danger-color); color: var(--light-text-color); }
+.btn.btn-danger:hover:not(:disabled) { background-color: #c82333; }
+
+/* --- EVENTS LIST & LOAD MORE --- */
+#selected-court-display h2 {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+#selected-court-display span {
+    color: #495057;
+}
+
+#events-list-container { margin-top: 1rem; }
+#load-more-container { text-align: center; margin-top: 1.5rem; }
+
+.date-header {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--primary-color);
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-transform: capitalize;
+}
+.date-header:first-of-type { margin-top: 0.5rem; }
+
+.event-item {
+    border: 1px solid var(--border-color);
+    border-left: 5px solid var(--primary-color);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+.event-details { flex-grow: 1; }
+.event-details h4 { margin-bottom: 0.25rem; font-weight: 700; }
+.event-details p { font-size: 0.9rem; color: #666; margin: 0; }
+.event-description {
+    font-size: 0.85rem !important;
+    color: #888 !important;
+    margin-top: 0.5rem !important;
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--border-color);
+    white-space: pre-wrap;
+    font-weight: 100; /* Peso 'Thin' para citações/descrições */
+}
+
+.event-item-blocked {
+    background-color: #f8f9fa;
+    border-left-color: #6c757d;
+}
+.event-item-blocked h4 { color: #6c757d; font-style: italic; }
+
+.event-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+.event-actions .btn { padding: 0.5rem 1rem; font-size: 0.8rem; }
+.event-actions .btn[disabled] {
+    background-color: #e9ecef;
+    border: 1px solid #dee2e6;
+    color: #adb5bd;
+    cursor: help;
+}
+
+/* --- UTILITY, MODALS, LOADER, TOAST --- */
+.hidden { display: none !important; }
+
+/* --- MODALS --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+.modal-content {
+    background-color: var(--white-color);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+.modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+.modal-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+/* --- LOADER --- */
+.loader-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+.spinner {
+    border: 5px solid var(--secondary-color);
+    border-top: 5px solid var(--primary-color);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* --- TOAST NOTIFICATIONS --- */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 3000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.toast {
+    padding: 1rem 1.5rem;
+    color: var(--white-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    opacity: 0;
+    transform: translateX(100%);
+    animation: slideIn 0.5s forwards;
+}
+.toast.success {
+    background-color: var(--success-color);
+}
+.toast.error {
+    background-color: var(--danger-color);
+}
+@keyframes slideIn {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .app-header { flex-direction: column; text-align: center; gap: 0.5rem; }
+    .filter-group { grid-template-columns: 1fr; }
+    .event-item { flex-direction: column; align-items: flex-start; }
+    .event-actions { width: 100%; justify-content: flex-end; }
+}
+
+/* --- Divisor e Espaçamento da Seção de Disponibilidade --- */
+
+/* 1. Estiliza o <hr> para ser apenas uma linha fina, sem margem vertical própria. */
+.section-divider {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin-top: 1.5rem; /* Adiciona um espaço fixo APÓS os botões */
+}
+
+/* 2. Aplica um espaçamento superior no container dos resultados. */
+#availability-results-container {
+    padding-top: 1.5rem; /* Adiciona um espaço interno ANTES do título "Disponibilidade" */
+}
+
+/* ...POR ESTE NOVO BLOCO em css/style.css */
+#availability-list-wrapper {
+    display: flex;
+    flex-direction: column; /* Os blocos ficarão um abaixo do outro */
+    gap: 12px;
+}
+
+.availability-block {
+    padding: 12px 15px;
+    border-radius: var(--border-radius);
+    border: 1px solid;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.availability-block.slot-free {
+    background-color: #e9f7ef;
+    color: #155724;
+    border-color: #c3e6cb;
+}
+
+.availability-block.slot-busy {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+    text-decoration: line-through; /* Tacha o texto para indicar que está ocupado */
+}
+
+
+/* Container principal das opções de recorrência */
+#recurrence-options-container {
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 0;
+    margin: 1rem 0;
+}
+
+/* Wrapper para os checkboxes dos dias da semana */
+#recurrence-days-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--primary-color); 
+    padding: 0.75rem;
+    border-radius: var(--border-radius);
+}
+
+#recurrence-days-wrapper label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--light-text-color);
+}
+
+/* Esconde o texto padrão do label (D, S, T, etc.) */
+#recurrence-days-wrapper label span {
+    display: none;
+}
+
+#recurrence-days-wrapper input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-top: 0.25rem;
+    font-weight: 800;
+}
+
+/* Em css/style.css, adicione esta nova regra */
+.modal-actions-column {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Em css/style.css, adicione estas regras */
+.modal-actions-column {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem; /* Adiciona espaço entre os botões */
+}
+
+.modal-warning {
+    font-size: 0.8rem;
+    font-style: italic;
+    text-align: center;
+    color: #6c757d;
+    margin-top: 0.5rem;
+}

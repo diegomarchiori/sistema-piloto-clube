@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendamento de Quadras</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+</head>
+<body>
+    <header class="app-header">
+        <img src="assets/logo.png" alt="Logo Esporte Clube Pinheiros" class="logo">
+        <h1>Agendamento de Espaços</h1>
+    </header>
+
+    <div id="auth-container" class="container">
+        <div id="auth-box">
+            <img src="assets/Brazão---PNG.png" alt="Logo Esporte Clube Pinheiros 2" class="login-logo">
+            <h3>Acessar o Sistema</h3>
+            <p>Por favor, faça o login com sua conta Google para continuar.</p>
+            
+            <div id="google-signin-button"></div>
+            
+        </div>
+    </div>
+    
+    <div id="main-app" class="hidden">
+        <div class="container user-info-bar">
+            <span id="user-info"></span>
+            <button id="sign-out-btn" class="btn btn-danger">Sair</button>
+        </div>
+        <main id="main-content" class="container">
+            <section class="card controls-section">
+                <h2>Visualizar Agendamentos</h2>
+                <div class="form-group">
+                    <label for="calendar-select">Selecione a Quadra:</label>
+                    <select id="calendar-select" name="calendar-select" required>
+                        <option value="" disabled selected>Carregando quadras...</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <div class="form-group">
+                        <label for="filter-start-date">Mostrar a partir de:</label>
+                        <input type="date" id="filter-start-date" name="filter-start-date">
+                    </div>
+                    <div class="form-group">
+                        <label for="filter-end-date">Até:</label>
+                        <input type="date" id="filter-end-date" name="filter-end-date">
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button id="find-events-btn" class="btn btn-primary">Buscar Eventos</button>
+                    <button id="clear-filters-btn" class="btn btn-secondary">Limpar Filtros</button>
+                    <button id="find-availability-btn" class="btn btn-primary">Ver Horários Livres</button>
+                </div>
+                <hr class="section-divider">
+                <div id="availability-results-container" class="hidden">
+                    <h4 id="availability-header"></h4>
+                    <div id="availability-list-wrapper">
+                        </div>
+                    <p id="availability-placeholder"></p>
+                </div>
+            </section>
+    
+            <section id="create-section" class="card create-section">
+                <div class="create-section-header">
+                    <h2>Novo Agendamento</h2>
+                    <button id="toggle-form-btn" class="btn btn-secondary">Mostrar Formulário</button>
+                </div>
+                <form id="create-event-form" class="hidden">
+                    <div class="form-group">
+                        <label for="event-title">Título do Evento:</label>
+                        <input type="text" id="event-title" name="summary" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="start-time">Início:</label>
+                        <input type="datetime-local" id="start-time" name="start" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="end-time">Fim:</label>
+                        <input type="datetime-local" id="end-time" name="end" required>
+                    </div>
+
+                    <div id="recurrence-options-container">
+                        <div class="form-group">
+                            <label for="recurrence-frequency">Repetir:</label>
+                            <select id="recurrence-frequency" name="recurrence-frequency">
+                                <option value="none" selected>Não se repete</option>
+                                <option value="daily">Diariamente</option>
+                                <option value="weekly">Semanalmente</option>
+                            </select>
+                        </div>
+
+                        <div id="recurrence-weekly-options" class="hidden">
+                            <div class="form-group">
+                                <label>Repetir nos dias:</label>
+                                <div id="recurrence-days-wrapper">
+                                    <label><input type="checkbox" name="recurrence-day" value="SU">Dom</label>
+                                    <label><input type="checkbox" name="recurrence-day" value="MO">Seg</label>
+                                    <label><input type="checkbox" name="recurrence-day" value="TU">Ter</label>
+                                    <label><input type="checkbox" name="recurrence-day" value="WE">Qua</label>
+                                    <label><input type="checkbox" name="recurrence-day" value="TH">Qui</label>
+                                    <label><input type="checkbox" name="recurrence-day" value="FR">Sex</label>
+                                    <label><input type="checkbox" name="recurrence-day" value="SA">Sáb</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="recurrence-end-date-container" class="hidden">
+                             <div class="form-group">
+                                <label for="recurrence-end-date">Até (data final):</label>
+                                <input type="date" id="recurrence-end-date" name="recurrence-end-date">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="event-description">Descrição (Opcional):</label>
+                        <textarea id="event-description" name="description" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Agendar</button>
+                </form>
+            </section>
+    
+            <section class="card events-section">
+                <div id="selected-court-display" class="hidden">
+                    <h2>Eventos para: <span id="selected-court-name"></span></h2>
+                </div>
+                <div id="events-list-container">
+                    <p id="events-placeholder">Selecione uma quadra e clique em "Buscar Eventos".</p>
+                </div>
+                <div id="load-more-container" class="hidden">
+                    <button id="load-more-btn" class="btn btn-secondary">Carregar Mais</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="loader" class="loader-overlay hidden"><div class="spinner"></div><p id="loader-text">Carregando...</p></div>
+    <div id="toast-container"></div>
+    <div id="confirm-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Confirmar Ação</h3>
+            <p id="confirm-modal-text"></p>
+            <div class="modal-actions">
+                <button id="confirm-modal-cancel-btn" class="btn btn-secondary">Cancelar</button>
+                <button id="confirm-modal-confirm-btn" class="btn btn-danger">Confirmar</button>
+            </div>
+        </div>
+    </div>
+    <div id="reschedule-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Reagendar Evento</h3>
+            <form id="reschedule-form">
+                <p><strong>Evento:</strong> <span id="reschedule-event-title"></span></p>
+                <div class="form-group"><label for="reschedule-start-time">Novo Início:</label><input type="datetime-local" id="reschedule-start-time" required></div>
+                <div class="form-group"><label for="reschedule-end-time">Novo Fim:</label><input type="datetime-local" id="reschedule-end-time" required></div>
+                <div class="modal-actions">
+                    <button type="button" id="reschedule-modal-cancel-btn" class="btn btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script src="js/app.js" defer></script>
+
+    <div id="conflict-report-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Relatório de Agendamento</h3>
+            <p>Alguns horários não puderam ser agendados por conflito ou erro:</p>
+            <ul id="conflict-list" style="list-style-type: disc; padding-left: 20px; margin-top: 10px;">
+                </ul>
+            <div class="modal-actions">
+                <button id="conflict-modal-close-btn" class="btn btn-primary">Fechar</button>
+            </div>
+        </div>
+    </div>
+    <div id="delete-options-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Excluir Evento Recorrente</h3>
+            <p>Este evento faz parte de uma série. Como você deseja excluí-lo?</p>
+            <div class="modal-actions-column">
+                <button id="delete-this-event-btn" class="btn btn-primary">Excluir somente este evento</button>
+                <button id="delete-future-events-btn" class="btn btn-primary">Excluir este e os futuros</button>
+                <button id="delete-all-events-btn" class="btn btn-danger">Excluir todos os eventos da série</button>
+                <p class="modal-warning">Atenção: A opção "Excluir todos" removerá também os eventos passados desta série.</p>
+                <button id="delete-options-cancel-btn" class="btn btn-secondary">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    </body>
+</html>

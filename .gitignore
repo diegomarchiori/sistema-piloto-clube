@@ -1,0 +1,17 @@
+# Ambiente Virtual do Python
+venv/
+/venv/
+
+# Arquivos de Cache do Python
+__pycache__/
+*.pyc
+
+# Arquivos de Log
+*.log
+
+# Arquivos de configuração e chaves sensíveis
+service-account-key.json
+config.yaml
+
+# Arquivos de ambiente (se você usar)
+.env
