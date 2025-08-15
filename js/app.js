@@ -61,7 +61,7 @@ window.onload = function () {
 function initializeAppLogic() {
     console.log("Inicializando a lógica da aplicação...");
 
-    const API_BASE_URL = 'http://localhost:8001';
+    const API_BASE_URL = 'http://agendamento.ecp.org.br:8001';
     
     const elements = {
         calendarSelect: document.getElementById('calendar-select'),
