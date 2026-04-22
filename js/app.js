@@ -3,7 +3,7 @@
 // ==============================================================================
 
 let idToken = null; // Guarda o "crachá" de identidade do usuário após o login
-const GOOGLE_CLIENT_ID = "391723919846-rk738n1hb9n8niba6ijvu4s50t3poblt.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = "GOOGLE_CLIENT_ID";
 
 /**
  * Ponto de Entrada da Aplicação.
@@ -61,7 +61,7 @@ window.onload = function () {
 function initializeAppLogic() {
     console.log("Inicializando a lógica da aplicação...");
 
-    const API_BASE_URL = 'http://agendamento.ecp.org.br:8001';
+    const API_BASE_URL = 'http://localhost:8001';
     
     const elements = {
         calendarSelect: document.getElementById('calendar-select'),
